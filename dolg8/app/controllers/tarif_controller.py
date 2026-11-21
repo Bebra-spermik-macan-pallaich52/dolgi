@@ -1,9 +1,7 @@
 from sqlalchemy import func
-from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, select
 
 from app.core.exceptions import ConflictError, NotFoundError
-from app.core.persistence import save
 from app.models.client import Client
 from app.models.tarif import (
     Tarif,
@@ -56,11 +54,18 @@ class TarifController:
         current = _get_tarif(id_tarif, session)
         for field, value in tarif.model_dump(exclude_unset=True).items():
             setattr(current, field, value)
-        return save(current, session)
+        session.add(current)
+        session.commit()
+        session.refresh(current)
+        return current
 
     @staticmethod
     def add_tarif(tarif: TarifCreate, session: Session) -> Tarif:
-        return save(Tarif(**tarif.model_dump()), session)
+        current = Tarif.model_validate(tarif)
+        session.add(current)
+        session.commit()
+        session.refresh(current)
+        return current
 
     @staticmethod
     def delete_tarif(id_tarif: int, session: Session) -> None:
@@ -70,12 +75,8 @@ class TarifController:
         ).first()
         if linked is not None:
             raise ConflictError("Нельзя удалить тариф, подключённый клиентам")
-        try:
-            session.delete(current)
-            session.commit()
-        except SQLAlchemyError:
-            session.rollback()
-            raise
+        session.delete(current)
+        session.commit()
 
     @staticmethod
     def get_tarifs_with_client_count(session: Session) -> list[TarifWithClientCount]:

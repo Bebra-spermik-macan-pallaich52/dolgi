@@ -67,3 +67,8 @@ async def database_error(request: Request, exc: SQLAlchemyError):
 @main_app.get("/", include_in_schema=False)
 def root():
     return RedirectResponse("/api/v1/docs")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:main_app", host="127.0.0.1", port=8000)

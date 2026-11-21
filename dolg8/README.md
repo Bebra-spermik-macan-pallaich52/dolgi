@@ -1,29 +1,16 @@
 # dolg8
 
-API «Телефонные номера»: клиенты, тарифы, поиск и статистика.
+API клиентов и тарифов на FastAPI, SQLModel и PostgreSQL.
+Сессия БД передаётся из роутера в контроллер через `Depends(get_session)`.
 
-Требования: Python 3.11+, PostgreSQL 14+.
-
-## Запуск
-
-Из папки `dolg8`:
+Создайте БД `dolg8`, скопируйте `.env.example` в `.env` и укажите подключение.
 
 ```bash
 python -m pip install -r requirements.txt
-createdb -h localhost -U postgres dolg8
+python -m app.main
 ```
 
-Скопируйте `.env.example` в `.env` и укажите `DATABASE_URL`.
-Спецсимволы в пароле URL-кодируйте, например `@` → `%40`.
+Запускайте из папки `dolg8`. Swagger: http://localhost:8000/api/v1/docs
 
-```bash
-uvicorn app.main:main_app --reload
-```
-
-Swagger: http://localhost:8000/api/v1/docs
-ReDoc: http://localhost:8000/api/v1/redoc
-
-Таблицы создаются автоматически. Добавление данных: `POST /api/v1/tarifs` и `POST /api/v1/clients`.
-В query-параметрах код `+7` передавайте как `%2B7`.
-
+Сначала добавьте тариф через `POST /api/v1/tarifs`, затем клиента через `POST /api/v1/clients`.
 Проверка: `python -m unittest discover -v`.

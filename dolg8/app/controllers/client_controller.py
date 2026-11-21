@@ -1,11 +1,9 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, select
 
 from app.core.exceptions import ConflictError, NotFoundError
-from app.core.persistence import save
 from app.models.client import (
     Client,
     ClientBirthdayRead,
@@ -45,7 +43,11 @@ class ClientController:
         if session.get(Client, client.number_phone) is not None:
             raise ConflictError("Клиент с таким номером телефона уже существует")
         _check_tarif(client.id_tarif, session)
-        return save(Client(**client.model_dump()), session)
+        current = Client.model_validate(client)
+        session.add(current)
+        session.commit()
+        session.refresh(current)
+        return current
 
     @staticmethod
     def get_clients_by_phone_code(phone: str, session: Session) -> list[ClientPhoneRead]:
@@ -117,21 +119,23 @@ class ClientController:
         _check_tarif(validated.id_tarif, session)
         for field, value in validated.model_dump().items():
             setattr(current, field, value)
-        return save(current, session)
+        session.add(current)
+        session.commit()
+        session.refresh(current)
+        return current
 
     @staticmethod
     def delete_client(phone: str, session: Session) -> None:
         client = _get_client(phone, session)
-        try:
-            session.delete(client)
-            session.commit()
-        except SQLAlchemyError:
-            session.rollback()
-            raise
+        session.delete(client)
+        session.commit()
 
     @staticmethod
     def assign_tarif(phone: str, id_tarif: int, session: Session) -> Client:
         client = _get_client(phone, session)
         _check_tarif(id_tarif, session)
         client.id_tarif = id_tarif
-        return save(client, session)
+        session.add(client)
+        session.commit()
+        session.refresh(client)
+        return client

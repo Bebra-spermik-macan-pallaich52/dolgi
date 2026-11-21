@@ -14,13 +14,12 @@ from app.models.tarif import (
 )
 
 router = APIRouter(prefix="/tarifs", tags=["Tarifs"])
-SessionDep = Annotated[Session, Depends(get_session)]
 TarifId = Annotated[int, Path(gt=0)]
 Phone = Annotated[str, Path(pattern=r"^\+?[0-9]{7,15}$")]
 
 
 @router.get("", response_model=list[TarifRead], summary="Список тарифов")
-def get_all_tarifs(session: SessionDep):
+def get_all_tarifs(session: Session = Depends(get_session)):
     return TarifController.get_all_tarifs(session)
 
 
@@ -28,14 +27,14 @@ def get_all_tarifs(session: SessionDep):
     "", response_model=TarifRead, status_code=status.HTTP_201_CREATED,
     summary="Добавить тариф",
 )
-def add_tarif(tarif: TarifCreate, session: SessionDep):
+def add_tarif(tarif: TarifCreate, session: Session = Depends(get_session)):
     return TarifController.add_tarif(tarif, session)
 
 
 @router.get(
     "/by-client/{phone}", response_model=TarifRead, summary="Тариф клиента"
 )
-def get_tarif_by_client(phone: Phone, session: SessionDep):
+def get_tarif_by_client(phone: Phone, session: Session = Depends(get_session)):
     return TarifController.get_tarif_by_client(phone, session)
 
 
@@ -43,7 +42,7 @@ def get_tarif_by_client(phone: Phone, session: SessionDep):
     "/stats/client-count", response_model=list[TarifClientCount],
     summary="Количество клиентов на каждом тарифе",
 )
-def get_client_counts(session: SessionDep):
+def get_client_counts(session: Session = Depends(get_session)):
     return TarifController.get_client_counts(session)
 
 
@@ -51,7 +50,7 @@ def get_client_counts(session: SessionDep):
     "/with-client-count", response_model=list[TarifWithClientCount],
     summary="Тарифы с количеством клиентов",
 )
-def get_tarifs_with_client_count(session: SessionDep):
+def get_tarifs_with_client_count(session: Session = Depends(get_session)):
     return TarifController.get_tarifs_with_client_count(session)
 
 
@@ -59,7 +58,7 @@ def get_tarifs_with_client_count(session: SessionDep):
     "/{id_tarif}/client-count", response_model=dict[str, int],
     summary="Количество клиентов тарифа",
 )
-def count_clients_for_tarif(id_tarif: TarifId, session: SessionDep):
+def count_clients_for_tarif(id_tarif: TarifId, session: Session = Depends(get_session)):
     return {
         "tarif_id": id_tarif,
         "count": TarifController.count_clients_for_tarif(id_tarif, session),
@@ -67,7 +66,7 @@ def count_clients_for_tarif(id_tarif: TarifId, session: SessionDep):
 
 
 @router.patch("/{id_tarif}", response_model=TarifRead, summary="Изменить тариф")
-def update_tarif(id_tarif: TarifId, tarif: TarifUpdate, session: SessionDep):
+def update_tarif(id_tarif: TarifId, tarif: TarifUpdate, session: Session = Depends(get_session)):
     return TarifController.update_tarif(id_tarif, tarif, session)
 
 
@@ -75,6 +74,6 @@ def update_tarif(id_tarif: TarifId, tarif: TarifUpdate, session: SessionDep):
     "/{id_tarif}", status_code=status.HTTP_204_NO_CONTENT,
     response_class=Response, summary="Удалить тариф",
 )
-def delete_tarif(id_tarif: TarifId, session: SessionDep) -> Response:
+def delete_tarif(id_tarif: TarifId, session: Session = Depends(get_session)) -> Response:
     TarifController.delete_tarif(id_tarif, session)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
